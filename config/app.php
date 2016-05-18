@@ -3,13 +3,26 @@
 /*
  * This file is part of Cachet.
  *
- * (c) James Brooks <james@cachethq.io>
+ * (c) Alt Three Services Limited
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
 return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Application Environment
+    |--------------------------------------------------------------------------
+    |
+    | This value determines the "environment" your application is currently
+    | running in. This may determine how you prefer to configure various
+    | services your application utilizes. Set this in your ".env" file.
+    |
+    */
+
+    'env' => env('APP_ENV', 'production'),
 
     /*
     |--------------------------------------------------------------------------
@@ -22,7 +35,7 @@ return [
     |
     */
 
-    'debug' => env('APP_DEBUG'),
+    'debug' => env('APP_DEBUG', false),
 
     /*
     |--------------------------------------------------------------------------
@@ -61,7 +74,7 @@ return [
     |
     */
 
-    'locale' => 'en',
+    'locale' => env('APP_LOCALE', 'en'),
 
     /*
     |--------------------------------------------------------------------------
@@ -87,9 +100,9 @@ return [
     |
     */
 
-    'key' => env('APP_KEY', 'SomeRandomString'),
+    'key' => env('APP_KEY'),
 
-    'cipher' => MCRYPT_RIJNDAEL_128,
+    'cipher' => 'AES-256-CBC',
 
     /*
     |--------------------------------------------------------------------------
@@ -104,7 +117,7 @@ return [
     |
     */
 
-    'log' => 'daily',
+    'log' => env('APP_LOG', 'daily'),
 
     /*
     |--------------------------------------------------------------------------
@@ -117,24 +130,22 @@ return [
     |
     */
 
-    'providers' => [
+    'providers' => array_filter([
 
         /*
          * Laravel Framework Service Providers...
          */
-        'Illuminate\Foundation\Providers\ArtisanServiceProvider',
         'Illuminate\Auth\AuthServiceProvider',
-        'Illuminate\Bus\BusServiceProvider',
+        'Illuminate\Broadcasting\BroadcastServiceProvider',
+        'AltThree\Bus\BusServiceProvider',
         'Illuminate\Cache\CacheServiceProvider',
         'Illuminate\Foundation\Providers\ConsoleSupportServiceProvider',
-        'Illuminate\Routing\ControllerServiceProvider',
         'Illuminate\Cookie\CookieServiceProvider',
         'Illuminate\Database\DatabaseServiceProvider',
         'Illuminate\Encryption\EncryptionServiceProvider',
         'Illuminate\Filesystem\FilesystemServiceProvider',
         'Illuminate\Foundation\Providers\FoundationServiceProvider',
         'Illuminate\Hashing\HashServiceProvider',
-        'Illuminate\Html\HtmlServiceProvider',
         'Illuminate\Mail\MailServiceProvider',
         'Illuminate\Pagination\PaginationServiceProvider',
         'Illuminate\Pipeline\PipelineServiceProvider',
@@ -149,35 +160,35 @@ return [
         /*
          * Packages Service Providers...
          */
+        'AltThree\Badger\BadgerServiceProvider',
+        'AltThree\Emoji\EmojiServiceProvider',
+        'BackupManager\Laravel\Laravel5ServiceProvider',
+        'Barryvdh\Cors\ServiceProvider',
         'Fideloper\Proxy\TrustedProxyServiceProvider',
         'GrahamCampbell\Binput\BinputServiceProvider',
         'GrahamCampbell\Exceptions\ExceptionsServiceProvider',
-        'GrahamCampbell\HTMLMin\HTMLMinServiceProvider',
+        'GrahamCampbell\Core\CoreServiceProvider',
         'GrahamCampbell\Markdown\MarkdownServiceProvider',
         'GrahamCampbell\Security\SecurityServiceProvider',
-        'GrahamCampbell\Throttle\ThrottleServiceProvider',
         'Jenssegers\Date\DateServiceProvider',
-        'McCool\LaravelAutoPresenter\LaravelAutoPresenterServiceProvider',
+        'McCool\LaravelAutoPresenter\AutoPresenterServiceProvider',
         'PragmaRX\Google2FA\Vendor\Laravel\ServiceProvider',
         'Roumen\Feed\FeedServiceProvider',
+        'TwigBridge\ServiceProvider',
 
         /*
          * Application Service Providers...
          */
-        'CachetHQ\Cachet\Providers\AppServiceProvider',
-        'CachetHQ\Cachet\Providers\BusServiceProvider',
-        'CachetHQ\Cachet\Providers\ConfigServiceProvider',
-        'CachetHQ\Cachet\Providers\ConsoleServiceProvider',
-        'CachetHQ\Cachet\Providers\EventServiceProvider',
-        'CachetHQ\Cachet\Providers\RepositoryServiceProvider',
-        'CachetHQ\Cachet\Providers\RouteServiceProvider',
-        'CachetHQ\Cachet\Providers\SettingsServiceProvider',
-        'CachetHQ\Cachet\Providers\SegmentApiServiceProvider',
-        'CachetHQ\Cachet\Providers\ViewComposerServiceProvider',
-        'CachetHQ\Cachet\Providers\LoadConfigServiceProvider',
-        'CachetHQ\Segment\SegmentServiceProvider',
+        'CachetHQ\Cachet\Foundation\Providers\AppServiceProvider',
+        'CachetHQ\Cachet\Foundation\Providers\ComposerServiceProvider',
+        'CachetHQ\Cachet\Foundation\Providers\ConsoleServiceProvider',
+        'CachetHQ\Cachet\Foundation\Providers\ConfigServiceProvider',
+        'CachetHQ\Cachet\Foundation\Providers\EventServiceProvider',
+        'CachetHQ\Cachet\Foundation\Providers\GitHubServiceProvider',
+        'CachetHQ\Cachet\Foundation\Providers\RepositoryServiceProvider',
+        'CachetHQ\Cachet\Foundation\Providers\RouteServiceProvider',
 
-    ],
+    ]),
 
     /*
     |--------------------------------------------------------------------------
@@ -196,19 +207,15 @@ return [
         'Artisan'   => 'Illuminate\Support\Facades\Artisan',
         'Auth'      => 'Illuminate\Support\Facades\Auth',
         'Blade'     => 'Illuminate\Support\Facades\Blade',
-        'Bus'       => 'Illuminate\Support\Facades\Bus',
         'Cache'     => 'Illuminate\Support\Facades\Cache',
         'Config'    => 'Illuminate\Support\Facades\Config',
         'Cookie'    => 'Illuminate\Support\Facades\Cookie',
         'Crypt'     => 'Illuminate\Support\Facades\Crypt',
         'DB'        => 'Illuminate\Support\Facades\DB',
-        'Eloquent'  => 'Illuminate\Database\Eloquent\Model',
         'Event'     => 'Illuminate\Support\Facades\Event',
         'File'      => 'Illuminate\Support\Facades\File',
-        'Form'      => 'Illuminate\Html\FormFacade',
+        'Gate'      => 'Illuminate\Support\Facades\Gate',
         'Hash'      => 'Illuminate\Support\Facades\Hash',
-        'Input'     => 'Illuminate\Support\Facades\Input',
-        'Inspiring' => 'Illuminate\Foundation\Inspiring',
         'Lang'      => 'Illuminate\Support\Facades\Lang',
         'Log'       => 'Illuminate\Support\Facades\Log',
         'Mail'      => 'Illuminate\Support\Facades\Mail',
@@ -226,7 +233,7 @@ return [
         'Validator' => 'Illuminate\Support\Facades\Validator',
         'View'      => 'Illuminate\Support\Facades\View',
 
-        'Setting'   => 'CachetHQ\Cachet\Facades\Setting',
+        'Binput'    => 'GrahamCampbell\Binput\Facades\Binput',
         'Str'       => 'Illuminate\Support\Str',
 
     ],

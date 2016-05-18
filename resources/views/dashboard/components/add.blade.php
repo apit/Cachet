@@ -3,17 +3,17 @@
 @section('content')
     <div class="header">
         <div class="sidebar-toggler visible-xs">
-            <i class="icon ion-navicon"></i>
+            <i class="ion ion-navicon"></i>
         </div>
         <span class="uppercase">
-            <i class="icons ion-outlet"></i> {{ trans('dashboard.components.components') }}
+            <i class="ion ion-ios-browsers-outline"></i> {{ trans('dashboard.components.components') }}
         </span>
         &gt; <small>{{ trans('dashboard.components.add.title') }}</small>
     </div>
     <div class="content-wrapper">
         <div class="row">
             <div class="col-sm-12">
-                @include('partials.dashboard.errors')
+                @include('dashboard.partials.errors')
                 <form name="CreateComponentForm" class="form-vertical" role="form" action="/dashboard/components/add" method="POST">
                     <input type="hidden" name="_token" value="{{ csrf_token() }}">
                     <fieldset>
@@ -33,17 +33,18 @@
                             <label>{{ trans('forms.components.description') }}</label>
                             <textarea name="component[description]" class="form-control" rows="5"></textarea>
                         </div>
-                        <input type="hidden" name="component[group_id]" value="0">
                         @if($groups->count() > 0)
                         <div class="form-group">
                             <label>{{ trans('forms.components.group') }}</label>
                             <select name="component[group_id]" class="form-control">
-                                <option selected></option>
+                                <option value="0" selected></option>
                                 @foreach($groups as $group)
                                 <option value="{{ $group->id }}">{{ $group->name }}</option>
                                 @endforeach
                             </select>
                         </div>
+                        @else
+                        <input type="hidden" name="component[group_id]" value="0">
                         @endif
                         <hr>
                         <div class="form-group">
@@ -55,13 +56,20 @@
                             <input name="component[tags]" class="form-control">
                             <span class="help-block">{{ trans('forms.components.tags-help') }}</span>
                         </div>
+                        <div class="checkbox">
+                            <label>
+                                <input type="hidden" value="0" name="component[enabled]">
+                                <input type="checkbox" value="1" name="component[enabled]" checked>
+                                {{ trans('forms.components.enabled') }}
+                            </label>
+                        </div>
                     </fieldset>
 
                     <input type="hidden" name="component[order]" value="0">
 
                     <div class="btn-group">
                         <button type="submit" class="btn btn-success">{{ trans('forms.create') }}</button>
-                        <a class="btn btn-default" href="{{ route('dashboard.components') }}">{{ trans('forms.cancel') }}</a>
+                        <a class="btn btn-default" href="{{ route('dashboard.components.index') }}">{{ trans('forms.cancel') }}</a>
                     </div>
                 </form>
             </div>

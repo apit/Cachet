@@ -3,7 +3,7 @@
 /*
  * This file is part of Cachet.
  *
- * (c) James Brooks <james@cachethq.io>
+ * (c) Alt Three Services Limited
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,33 +11,54 @@
 
 namespace CachetHQ\Cachet\Models;
 
+use AltThree\Validator\ValidatingTrait;
+use CachetHQ\Cachet\Presenters\MetricPointPresenter;
 use Illuminate\Database\Eloquent\Model;
-use Watson\Validating\ValidatingTrait;
+use McCool\LaravelAutoPresenter\HasPresenter;
 
-/**
- * @property int            $id
- * @property int            $metric_id
- * @property int            $value
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
- */
-class MetricPoint extends Model
+class MetricPoint extends Model implements HasPresenter
 {
     use ValidatingTrait;
+
+    /**
+     * The model's attributes.
+     *
+     * @var string[]
+     */
+    protected $attributes = [
+        'value'   => 0,
+        'counter' => 1,
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var string[]
+     */
+    protected $casts = [
+        'metric_id' => 'int',
+        'value'     => 'float',
+        'counter'   => 'int',
+    ];
 
     /**
      * The attributes that are mass assignable.
      *
      * @var string[]
      */
-    protected $fillable = ['metric_id', 'value'];
+    protected $fillable = [
+        'metric_id',
+        'value',
+        'counter',
+        'created_at',
+    ];
 
     /**
      * The validation rules.
      *
      * @var string[]
      */
-    protected $rules = [
+    public $rules = [
         'value' => 'numeric|required',
     ];
 
@@ -48,6 +69,34 @@ class MetricPoint extends Model
      */
     public function metric()
     {
-        return $this->belongsTo('CachetHQ\Cachet\Models\Metric', 'id', 'metric_id');
+        return $this->belongsTo(Metric::class);
+    }
+
+    /**
+     * Override the value attribute.
+     *
+     * @param mixed $value
+     *
+     * @return float
+     */
+    public function getActiveValueAttribute($value)
+    {
+        if ($this->metric->calc_type === Metric::CALC_SUM) {
+            return round((float) $value * $this->counter, $this->metric->places);
+        } elseif ($this->metric->calc_type === Metric::CALC_AVG) {
+            return round((float) $value * $this->counter, $this->metric->places);
+        }
+
+        return round((float) $value, $this->metric->places);
+    }
+
+    /**
+     * Get the presenter class.
+     *
+     * @return string
+     */
+    public function getPresenterClass()
+    {
+        return MetricPointPresenter::class;
     }
 }

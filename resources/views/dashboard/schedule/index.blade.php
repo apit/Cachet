@@ -2,13 +2,13 @@
 
 @section('content')
     <div class="content-panel">
-        @if(isset($subMenu))
-        @include('partials.dashboard.sub-sidebar')
+        @if(isset($sub_menu))
+        @include('dashboard.partials.sub-sidebar')
         @endif
         <div class="content-wrapper">
             <div class="header sub-header">
                 <span class="uppercase">
-                    <i class="icon ion-android-calendar"></i> {{ trans('dashboard.schedule.schedule') }}
+                    <i class="ion ion-android-calendar"></i> {{ trans('dashboard.schedule.schedule') }}
                 </span>
                 <a class="btn btn-sm btn-success pull-right" href="{{ route('dashboard.schedule.add') }}">
                     {{ trans('dashboard.schedule.add.title') }}
@@ -17,7 +17,8 @@
             </div>
             <div class="row">
                 <div class="col-sm-12">
-                    @include('partials.dashboard.errors')
+                    @include('dashboard.partials.errors')
+                    <p class="lead">{!! trans_choice('dashboard.schedule.logged', $schedule->count(), ['count' => $schedule->count()]) !!}</p>
 
                     <div class="striped-list">
                         @foreach($schedule as $incident)

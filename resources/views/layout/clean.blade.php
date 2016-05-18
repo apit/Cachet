@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
-@include('partials.dashboard.head')
+@include('dashboard.partials.head')
 
-<body class="dashboard">
+<body class="dashboard @yield('bodyClass')">
     <div class="content">
         @yield('content')
     </div>

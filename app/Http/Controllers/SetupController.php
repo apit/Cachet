@@ -3,7 +3,7 @@
 /*
  * This file is part of Cachet.
  *
- * (c) James Brooks <james@cachethq.io>
+ * (c) Alt Three Services Limited
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,10 +11,13 @@
 
 namespace CachetHQ\Cachet\Http\Controllers;
 
-use CachetHQ\Cachet\Models\Setting;
 use CachetHQ\Cachet\Models\User;
+use Dotenv\Dotenv;
+use Dotenv\Exception\InvalidPathException;
 use GrahamCampbell\Binput\Facades\Binput;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Response;
@@ -22,14 +25,68 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\View;
 
-class SetupController extends AbstractController
+class SetupController extends Controller
 {
     /**
-     * Create a new setup controller instance.
+     * Array of cache drivers.
+     *
+     * @var string[]
+     */
+    protected $cacheDrivers = [
+        'apc'       => 'APC(u)',
+        'array'     => 'Array',
+        'file'      => 'File',
+        'database'  => 'Database',
+        'memcached' => 'Memcached',
+        'redis'     => 'Redis',
+    ];
+
+    /**
+     * Array of step1 rules.
+     *
+     * @var string[]
+     */
+    protected $rulesStep1;
+
+    /**
+     * Array of step2 rules.
+     *
+     * @var string[]
+     */
+    protected $rulesStep2;
+
+    /**
+     * Array of step3 rules.
+     *
+     * @var string[]
+     */
+    protected $rulesStep3;
+
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
      */
     public function __construct()
     {
-        $this->beforeFilter('csrf', ['only' => ['postCachet']]);
+        $this->rulesStep1 = [
+            'env.cache_driver'   => 'required|in:'.implode(',', array_keys($this->cacheDrivers)),
+            'env.session_driver' => 'required|in:'.implode(',', array_keys($this->cacheDrivers)),
+        ];
+
+        $this->rulesStep2 = [
+            'settings.app_name'     => 'required',
+            'settings.app_domain'   => 'required',
+            'settings.app_timezone' => 'required',
+            'settings.app_locale'   => 'required',
+            'settings.show_support' => 'bool',
+        ];
+
+        $this->rulesStep3 = [
+            'user.username' => ['required', 'regex:/\A(?!.*[:;]-\))[ -~]+\z/'],
+            'user.email'    => 'email|required',
+            'user.password' => 'required',
+        ];
     }
 
     /**
@@ -39,13 +96,27 @@ class SetupController extends AbstractController
      */
     public function getIndex()
     {
-        return View::make('setup')->with([
-            'pageTitle' => trans('setup.setup'),
-        ]);
+        $supportedLanguages = Request::getLanguages();
+        $userLanguage = Config::get('app.locale');
+
+        foreach ($supportedLanguages as $language) {
+            $language = str_replace('_', '-', $language);
+
+            if (isset($this->langs[$language])) {
+                $userLanguage = $language;
+                break;
+            }
+        }
+
+        return View::make('setup')
+            ->withPageTitle(trans('setup.setup'))
+            ->withCacheDrivers($this->cacheDrivers)
+            ->withUserLanguage($userLanguage)
+            ->withAppUrl(Request::root());
     }
 
     /**
-     * Handles validation on step one of setup form.
+     * Handles validation on step one of the setup form.
      *
      * @return \Illuminate\Http\Response
      */
@@ -53,60 +124,43 @@ class SetupController extends AbstractController
     {
         $postData = Binput::all();
 
-        segment_track('Setup', [
-            'step' => '1',
-        ]);
-
-        $v = Validator::make($postData, [
-            'settings.app_name'     => 'required',
-            'settings.app_domain'   => 'required',
-            'settings.app_timezone' => 'required',
-            'settings.app_locale'   => 'required',
-            'settings.show_support' => 'boolean',
-        ]);
+        $v = Validator::make($postData, $this->rulesStep1);
 
         if ($v->passes()) {
-            segment_track('Setup', [
-                'event'   => 'Step 1',
-                'success' => true,
-            ]);
-
             return Response::json(['status' => 1]);
-        } else {
-            // No good, let's try that again.
-
-            segment_track('Setup', [
-                'event'   => 'Step 1',
-                'success' => false,
-            ]);
-
-            return Response::json(['errors' => $v->messages()], 400);
         }
+
+        return Response::json(['errors' => $v->getMessageBag()], 400);
     }
 
     /**
-     * Handles the actual app setup.
+     * Handles validation on step two of the setup form.
      *
-     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\Response
+     * @return \Illuminate\Http\Response
      */
     public function postStep2()
     {
         $postData = Binput::all();
 
-        segment_track('Setup', [
-            'step' => '2',
-        ]);
+        $v = Validator::make($postData, $this->rulesStep1 + $this->rulesStep2);
 
-        $v = Validator::make($postData, [
-            'settings.app_name'     => 'required',
-            'settings.app_domain'   => 'required',
-            'settings.app_timezone' => 'required',
-            'settings.app_locale'   => 'required',
-            'settings.show_support' => 'boolean',
-            'user.username'         => 'alpha_num|required',
-            'user.email'            => 'email|required',
-            'user.password'         => 'required',
-        ]);
+        if ($v->passes()) {
+            return Response::json(['status' => 1]);
+        }
+
+        return Response::json(['errors' => $v->getMessageBag()], 400);
+    }
+
+    /**
+     * Handles the actual app setup, including user, settings and env.
+     *
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Http\Response
+     */
+    public function postStep3()
+    {
+        $postData = Binput::all();
+
+        $v = Validator::make($postData, $this->rulesStep1 + $this->rulesStep2 + $this->rulesStep3);
 
         if ($v->passes()) {
             // Pull the user details out.
@@ -116,44 +170,64 @@ class SetupController extends AbstractController
                 'username' => $userDetails['username'],
                 'email'    => $userDetails['email'],
                 'password' => $userDetails['password'],
-                'level'    => 1,
+                'level'    => User::LEVEL_ADMIN,
             ]);
 
             Auth::login($user);
 
-            $settings = array_get($postData, 'settings');
+            $setting = app('setting');
+
+            $settings = array_pull($postData, 'settings');
 
             foreach ($settings as $settingName => $settingValue) {
-                Setting::create([
-                    'name'  => $settingName,
-                    'value' => $settingValue,
-                ]);
+                $setting->set($settingName, $settingValue);
+            }
+
+            $envData = array_pull($postData, 'env');
+
+            // Write the env to the .env file.
+            foreach ($envData as $envKey => $envValue) {
+                $this->writeEnv($envKey, $envValue);
             }
 
             Session::flash('setup.done', true);
-
-            segment_track('Setup', [
-                'event'   => 'Step 2',
-                'success' => true,
-            ]);
 
             if (Request::ajax()) {
                 return Response::json(['status' => 1]);
             }
 
             return Redirect::to('dashboard');
-        } else {
-            segment_track('Setup', [
-                'event'   => 'Step 2',
-                'success' => false,
-            ]);
+        }
 
-            // No good, let's try that again.
-            if (Request::ajax()) {
-                return Response::json(['errors' => $v->messages()], 400);
-            }
+        if (Request::ajax()) {
+            return Response::json(['errors' => $v->getMessageBag()], 400);
+        }
 
-            return Redirect::back()->withInput()->with('errors', $v->messages());
+        return Redirect::route('setup.index')->withInput()->withErrors($v->getMessageBag());
+    }
+
+    /**
+     * Writes to the .env file with given parameters.
+     *
+     * @param string $key
+     * @param mixed  $value
+     *
+     * @return void
+     */
+    protected function writeEnv($key, $value)
+    {
+        $dir = app()->environmentPath();
+        $file = app()->environmentFile();
+        $path = "{$dir}/{$file}";
+
+        try {
+            (new Dotenv($dir, $file))->load();
+
+            file_put_contents($path, str_replace(
+                env(strtoupper($key)), $value, file_get_contents($path)
+            ));
+        } catch (InvalidPathException $e) {
+            //
         }
     }
 }

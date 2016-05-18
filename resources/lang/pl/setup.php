@@ -3,21 +3,21 @@
 /*
  * This file is part of Cachet.
  *
- * (c) James Brooks <james@cachethq.io>
+ * (c) Alt Three Services Limited
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
 return [
-    'setup'             => 'Konfiguracja',
+    'setup'             => 'Instalacja',
     'title'             => 'Skonfiguruj Cachet',
-    'service_details'   => 'Szczegóły serwisu',
-    'status_page_setup' => 'Konfiguracja strony statusowej',
-    'show_support'      => 'Okaż wsparcie dla Cachet?',
-    'admin_account'     => 'Konto administratora',
-    'complete_setup'    => 'Konfiguracja zakończona',
-    'completed'         => 'Cachet został skonfigurowany pomyślnie!',
-    'finish_setup'      => 'Przejdź do panelu',
-    'allow_tracking'    => 'Zezwolić na anonimowe śledzenie wykorzystania?',
+    'service_details'   => 'Szczegóły usługi',
+    'env_setup'         => 'Konfiguracja środowiska',
+    'status_page_setup' => 'Skonfiguruj stronę statusu',
+    'show_support'      => 'Pokazać wsparcie dla Cachet?',
+    'admin_account'     => 'Konto Administratora',
+    'complete_setup'    => 'Zakończ instalację',
+    'completed'         => 'Cachet został pomyślnie skonfigurowany!',
+    'finish_setup'      => 'Przejdź do pulpitu',
 ];

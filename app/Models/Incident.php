@@ -3,7 +3,7 @@
 /*
  * This file is part of Cachet.
  *
- * (c) James Brooks <james@cachethq.io>
+ * (c) Alt Three Services Limited
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,40 +11,65 @@
 
 namespace CachetHQ\Cachet\Models;
 
+use AltThree\Validator\ValidatingTrait;
+use CachetHQ\Cachet\Models\Traits\SearchableTrait;
+use CachetHQ\Cachet\Models\Traits\SortableTrait;
+use CachetHQ\Cachet\Presenters\IncidentPresenter;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use McCool\LaravelAutoPresenter\HasPresenter;
-use Watson\Validating\ValidatingTrait;
 
-/**
- * @property int            $id
- * @property int            $component_id
- * @property string         $name
- * @property int            $status
- * @property string         $message
- * @property int            $user_id
- * @property \Carbon\Carbon $scheduled_at
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
- * @property \Carbon\Carbon $deleted_at
- * @property string         $humanStatus
- */
 class Incident extends Model implements HasPresenter
 {
-    use SoftDeletes, ValidatingTrait;
+    use SearchableTrait, SoftDeletes, SortableTrait, ValidatingTrait;
 
     /**
-     * The validation rules.
+     * Status for incident being investigated.
+     *
+     * @var int
+     */
+    const INVESTIGATING = 1;
+
+    /**
+     * Status for incident having been identified.
+     *
+     * @var int
+     */
+    const IDENTIFIED = 2;
+
+    /**
+     * Status for incident being watched.
+     *
+     * @var int
+     */
+    const WATCHED = 3;
+
+    /**
+     * Status for incident now being fixed.
+     *
+     * @var int
+     */
+    const FIXED = 4;
+
+    /**
+     * The accessors to append to the model's array form.
      *
      * @var string[]
      */
-    protected $rules = [
-        'user_id'      => 'required|integer',
-        'component_id' => 'integer',
-        'name'         => 'required',
-        'status'       => 'required|integer',
-        'message'      => 'required',
+    protected $appends = [
+        'is_resolved',
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var string[]
+     */
+    protected $casts = [
+        'visible'      => 'int',
+        'scheduled_at' => 'date',
+        'deleted_at'   => 'date',
     ];
 
     /**
@@ -52,21 +77,73 @@ class Incident extends Model implements HasPresenter
      *
      * @var string[]
      */
-    protected $fillable = ['user_id', 'component_id', 'name', 'status', 'message', 'scheduled_at'];
+    protected $fillable = [
+        'component_id',
+        'name',
+        'status',
+        'visible',
+        'message',
+        'scheduled_at',
+        'created_at',
+        'updated_at',
+    ];
 
     /**
-     * The accessors to append to the model's serialized form.
+     * The validation rules.
      *
      * @var string[]
      */
-    protected $appends = ['human_status'];
+    public $rules = [
+        'component_id' => 'int',
+        'name'         => 'required',
+        'status'       => 'required|int',
+        'visible'      => 'required|bool',
+        'message'      => 'required',
+    ];
 
     /**
-     * The attributes that should be mutated to dates.
+     * The searchable fields.
      *
      * @var string[]
      */
-    protected $dates = ['scheduled_at', 'deleted_at'];
+    protected $searchable = [
+        'id',
+        'name',
+        'status',
+        'visible',
+    ];
+
+    /**
+     * The sortable fields.
+     *
+     * @var string[]
+     */
+    protected $sortable = [
+        'id',
+        'name',
+        'status',
+        'visible',
+        'message',
+    ];
+
+    /**
+     * The relations to eager load on every query.
+     *
+     * @var string[]
+     */
+    protected $with = ['updates'];
+
+    /**
+     * Finds all visible incidents.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeVisible($query)
+    {
+        return $query->where('visible', 1);
+    }
 
     /**
      * Finds all scheduled incidents (maintenance).
@@ -95,25 +172,37 @@ class Incident extends Model implements HasPresenter
     }
 
     /**
+     * Get the updates relation.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function updates()
+    {
+        return $this->hasMany(IncidentUpdate::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
      * An incident belongs to a component.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function component()
     {
-        return $this->belongsTo('CachetHQ\Cachet\Models\Component', 'component_id', 'id');
+        return $this->belongsTo(Component::class, 'component_id', 'id');
     }
 
     /**
-     * Returns a human readable version of the status.
+     * Is the incident resolved?
      *
-     * @return string
+     * @return bool
      */
-    public function getHumanStatusAttribute()
+    public function getIsResolvedAttribute()
     {
-        $statuses = trans('cachet.incidents.status');
+        if ($updates = $this->updates->first()) {
+            return $updates->status === self::FIXED;
+        }
 
-        return $statuses[$this->status];
+        return $this->status === self::FIXED;
     }
 
     /**
@@ -123,7 +212,7 @@ class Incident extends Model implements HasPresenter
      */
     public function getIsScheduledAttribute()
     {
-        return $this->getOriginal('scheduled_at');
+        return $this->getOriginal('scheduled_at') !== null;
     }
 
     /**
@@ -133,6 +222,6 @@ class Incident extends Model implements HasPresenter
      */
     public function getPresenterClass()
     {
-        return 'CachetHQ\Cachet\Presenters\IncidentPresenter';
+        return IncidentPresenter::class;
     }
 }

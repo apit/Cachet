@@ -3,7 +3,7 @@
 /*
  * This file is part of Cachet.
  *
- * (c) James Brooks <james@cachethq.io>
+ * (c) Alt Three Services Limited
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,30 +11,22 @@
 
 namespace CachetHQ\Cachet\Models;
 
+use AltThree\Validator\ValidatingTrait;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use Watson\Validating\ValidatingTrait;
 
-/**
- * @property int            $id
- * @property string         $name
- * @property string         $slug
- * @property string         $template
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
- */
 class IncidentTemplate extends Model
 {
     use ValidatingTrait;
 
     /**
-     * The validation rules.
+     * The attributes that should be casted to native types.
      *
      * @var string[]
      */
-    protected $rules = [
-        'name'     => 'required',
-        'template' => 'required',
+    protected $casts = [
+        'name'     => 'string',
+        'template' => 'string',
     ];
 
     /**
@@ -43,6 +35,16 @@ class IncidentTemplate extends Model
      * @var string[]
      */
     protected $fillable = ['name', 'template'];
+
+    /**
+     * The validation rules.
+     *
+     * @var string[]
+     */
+    public $rules = [
+        'name'     => 'required',
+        'template' => 'required',
+    ];
 
     /**
      * Overrides the models boot method.
@@ -54,5 +56,18 @@ class IncidentTemplate extends Model
         self::saving(function ($template) {
             $template->slug = Str::slug($template->name);
         });
+    }
+
+    /**
+     * Finds a template by the slug.
+     *
+     * @param \Illuminate\Database\Query\Builder $query
+     * @param string                             $slug
+     *
+     * @return \Illuminate\Database\Query\Builder
+     */
+    public function scopeForSlug($query, $slug)
+    {
+        return $query->where('slug', $slug);
     }
 }

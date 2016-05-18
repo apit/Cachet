@@ -3,7 +3,7 @@
 /*
  * This file is part of Cachet.
  *
- * (c) James Brooks <james@cachethq.io>
+ * (c) Alt Three Services Limited
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -22,9 +22,7 @@ return [
     |
     */
 
-    'paths' => [
-        realpath(base_path('resources/views')),
-    ],
+    'paths' => [realpath(base_path('resources/views'))],
 
     /*
     |--------------------------------------------------------------------------
@@ -37,6 +35,6 @@ return [
     |
     */
 
-    'compiled' => realpath(storage_path().'/framework/views'),
+    'compiled' => realpath(storage_path('framework/views')),
 
 ];

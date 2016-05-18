@@ -3,7 +3,7 @@
 /*
  * This file is part of Cachet.
  *
- * (c) James Brooks <james@cachethq.io>
+ * (c) Alt Three Services Limited
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -15,19 +15,24 @@ return [
 
     // Incidents
     'incidents' => [
+        'title'                    => 'Incidencias y horario',
         'incidents'                => 'Incidentes',
         'logged'                   => '{0} No hay incidencias, ¡buen trabajo!|Has registrado una incidencia.|Has reportado <strong>:count</strong> incidencias.',
         'incident-create-template' => 'Crear plantilla',
         'incident-templates'       => 'Plantillas de incidente',
         'add'                      => [
-            'title'   => 'Agregar un incidente',
+            'title'   => 'Reportar incidente',
             'success' => 'Incidente agregado.',
-            'failure' => 'Algo salió mal con el incidente.',
+            'failure' => 'Hubo un error agregando el incidente, por favor intente de nuevo.',
         ],
         'edit' => [
             'title'   => 'Editar un incidente',
             'success' => 'Incidente actualizado.',
-            'failure' => 'Algo salió mal con el incidente.',
+            'failure' => 'Hubo un error editando el incidente, por favor intente de nuevo.',
+        ],
+        'delete' => [
+            'success' => 'El incidente se ha eliminado y no se mostrará en tu página de estado.',
+            'failure' => 'El incidente no se pudo eliminar, por favor intente de nuevo.',
         ],
 
         // Incident templates
@@ -35,14 +40,40 @@ return [
             'title' => 'Plantillas de incidente',
             'add'   => [
                 'title'   => 'Crear una plantilla de incidente',
-                'success' => 'Plantilla creada.',
+                'message' => 'Deberías añadir una plantilla de incidente.',
+                'success' => 'Su nueva plantilla de incidentes ha sido creada.',
                 'failure' => 'Algo salió mal con la plantilla de incidente.',
             ],
             'edit' => [
                 'title'   => 'Editar plantilla',
-                'success' => '¡Se ha actualizado la plantilla!',
-                'failure' => 'Algo salió mal actualizar la plantilla de incidente',
+                'success' => 'La plantilla de incidente ha sido actualizada.',
+                'failure' => 'Algo salió mal actualizando la plantilla de incidente',
             ],
+            'delete' => [
+                'success' => 'La plantilla de incidente se ha eliminado.',
+                'failure' => 'La plantilla de incidente no se pudo eliminar. Por favor, inténtalo de nuevo.',
+            ],
+        ],
+    ],
+
+    // Incident Maintenance
+    'schedule' => [
+        'schedule'     => 'Mantenimiento programado',
+        'logged'       => '{0} No hay planificaciones, buen trabajo.|Has registrado una planificación.|Has registrado <strong>:count</strong> planificaciones.',
+        'scheduled_at' => 'Programado para :timestamp',
+        'add'          => [
+            'title'   => 'Agregar mantenimiento programado',
+            'success' => 'Planificación agregada.',
+            'failure' => 'Algo salió mal agregando la planificación, por favor intente de nuevo.',
+        ],
+        'edit' => [
+            'title'   => 'Editar Mantenimiento Programado',
+            'success' => 'La planificación ha sido actualizada!',
+            'failure' => 'Algo salió mal editando la planificación, por favor intente de nuevo.',
+        ],
+        'delete' => [
+            'success' => 'La planificación ha sido eliminada y no será mostrada en su página de estado.',
+            'failure' => 'El mantenimiento programado no pudo ser eliminado, por favor, inténtelo de nuevo.',
         ],
     ],
 
@@ -50,31 +81,40 @@ return [
     'components' => [
         'components'         => 'Componentes',
         'component_statuses' => 'Estatus de los componentes',
+        'listed_group'       => 'Agrupado bajo :nombre',
         'add'                => [
-            'title'   => 'Agregar un componente',
+            'title'   => 'Agregar componente',
             'message' => 'Deberías agregar un componente.',
             'success' => 'Componente creado.',
-            'failure' => 'Algo salió mal con el componente.',
+            'failure' => 'Algo salió mal con el componente, por favor intente de nuevo.',
         ],
         'edit' => [
-            'title'   => 'Editar un componente',
+            'title'   => 'Editar componente',
             'success' => 'Componente actualizado.',
-            'failure' => 'Algo salió mal con el componente.',
+            'failure' => 'Algo salió mal con el componente, por favor intente de nuevo.',
+        ],
+        'delete' => [
+            'success' => 'El componente se ha eliminado!',
+            'failure' => 'El componente no pudo ser eliminado, por favor, inténtelo de nuevo.',
         ],
 
         // Component groups
         'groups' => [
             'groups'        => 'Grupo de componente|Grupos de componente',
-            'no_components' => 'You should add a component group.',
+            'no_components' => 'Usted debería agregar un grupo de componentes.',
             'add'           => [
-                'title'   => 'Agregar un grupo',
-                'success' => 'Grupo componente agregado.',
-                'failure' => 'Algo salió mal con el grupo del componente.',
+                'title'   => 'Agregar un grupo de componentes',
+                'success' => 'Grupo de componentes agregado.',
+                'failure' => 'Algo salió mal con el grupo de componentes, por favor vuelva a intentarlo.',
             ],
             'edit' => [
-                'title'   => 'Edit a component group',
-                'success' => 'Component group updated.',
-                'failure' => 'Something went wrong with the component group.',
+                'title'   => 'Editar un grupo de componentes',
+                'success' => 'Grupo de componentes actualizado.',
+                'failure' => 'Algo salió mal con el grupo de componentes, por favor vuelva a intentarlo.',
+            ],
+            'delete' => [
+                'success' => 'El grupo de componentes se ha eliminado!',
+                'failure' => 'El grupo de componentes no pudo ser eliminado, por favor, inténtelo de nuevo.',
             ],
         ],
     ],
@@ -83,9 +123,38 @@ return [
     'metrics' => [
         'metrics' => 'Métricas',
         'add'     => [
-            'title'   => 'Crear una métrica',
+            'title'   => 'Crear una métrica o indicador',
+            'message' => 'Deberías añadir una métrica.',
             'success' => 'Métrica creada.',
-            'failure' => 'Algo salió mal con la métrica.',
+            'failure' => 'Algo salió mal con la métrica, por favor, inténtelo de nuevo.',
+        ],
+        'edit' => [
+            'title'   => 'Editar una métrica',
+            'success' => 'Métrica actualizada.',
+            'failure' => 'Algo salió mal con la métrica, por favor, inténtelo de nuevo.',
+        ],
+        'delete' => [
+            'success' => 'La métrica se ha eliminado y no se mostrará más en tu página de estado.',
+            'failure' => 'La métrica no pudo ser eliminada, por favor, inténtelo de nuevo.',
+        ],
+    ],
+    // Subscribers
+    'subscribers' => [
+        'subscribers'      => 'Suscriptores',
+        'description'      => 'Los suscriptores recibirán actualizaciones por correo electrónico cuando se creen incidentes o se actualicen componentes.',
+        'verified'         => 'Verificado',
+        'not_verified'     => 'No confirmado',
+        'subscriber'       => ':email, suscrito :date',
+        'no_subscriptions' => 'Suscrito a todas las actualizaciones',
+        'add'              => [
+            'title'   => 'Agregar un nuevo subscriptor',
+            'success' => 'Subscriptor agregado.',
+            'failure' => 'Algo salió mal al agregar el suscriptor, por favor, inténtelo de nuevo.',
+        ],
+        'edit' => [
+            'title'   => 'Actualizar subscriptor',
+            'success' => 'Subscriptor actualizado.',
+            'failure' => 'Algo salió mal al editar el suscriptor, por favor, inténtelo de nuevo.',
         ],
     ],
 
@@ -96,14 +165,23 @@ return [
         'profile'     => 'Perfil',
         'description' => 'Los miembros del equipo será capaces de añadir, modificar y editar componentes e incidentes.',
         'add'         => [
-            'title'   => 'Agregar miembro de equipo',
+            'title'   => 'Añadir a un nuevo miembro de equipo',
             'success' => 'Miembro del equipo agregado.',
-            'failure' => 'Algo salió mal con el componente.',
+            'failure' => 'No se pudo agregar el miembro del equipo, por favor vuelva a intentarlo.',
         ],
-        'edit'        => [
+        'edit' => [
             'title'   => 'Actualizar perfil',
             'success' => 'Perfil actualizado.',
-            'failure' => 'Algo salió mal al actualizar.',
+            'failure' => 'Algo salió mal actualizando el perfil, por favor intente de nuevo.',
+        ],
+        'delete' => [
+            'success' => 'El miembro del equipo ha sido eliminado y ya no tendrán acceso al Pane de Control!',
+            'failure' => 'No se pudo agregar el miembro del equipo, por favor vuelva a intentarlo.',
+        ],
+        'invite' => [
+            'title'   => 'Invitar a un nuevo miembro al equipo',
+            'success' => 'Se ha enviado una invitación',
+            'failure' => 'La invitación no pudo ser enviada, por favor intente de nuevo.',
         ],
     ],
 
@@ -111,12 +189,24 @@ return [
     'settings' => [
         'settings'  => 'Ajustes',
         'app-setup' => [
-            'app-setup'   => 'Configuración',
+            'app-setup'   => 'Configuración de aplicación',
             'images-only' => 'Sólo puedes subir imágenes.',
             'too-big'     => 'El archivo subido es demasiado grande. Sube una imagen con tamaño menor a: tamaño',
         ],
+        'analytics' => [
+            'analytics' => 'Analytics',
+        ],
+        'localization' => [
+            'localization' => 'Localización',
+        ],
+        'customization' => [
+            'customization' => 'Personalización',
+            'header'        => 'Cabecera HTML personalizada',
+            'footer'        => 'Pie HTML personalizado',
+        ],
         'security' => [
-            'security' => 'Seguridad',
+            'security'   => 'Seguridad',
+            'two-factor' => 'Usuarios sin autenticación de dos factores',
         ],
         'stylesheet' => [
             'stylesheet' => 'Hoja de estilo',
@@ -126,7 +216,7 @@ return [
         ],
         'edit' => [
             'success' => 'Configuración guardada.',
-            'failure' => 'La configuración no ha podido ser guardada.',
+            'failure' => 'La configuración no se podido guardar.',
         ],
     ],
 
@@ -144,7 +234,7 @@ return [
     'logout'      => 'Salir',
 
     // Notifications
-    'notifications'     => [
+    'notifications' => [
         'notifications' => 'Notificaciones',
         'awesome'       => 'Excelente.',
         'whoops'        => 'Whoops.',
@@ -152,16 +242,16 @@ return [
 
     // Welcome modal
     'welcome' => [
-        'welcome' => 'Bienvenido a Cachet',
+        'welcome' => 'Bienvenido a tu página de estado!',
         'message' => 'La página de estado está casi lista! Tal vez quieras configurar estos ajustes adicionales',
-        'close'   => 'Ir directo al Panel de Control',
+        'close'   => 'Llévame directamente a mi dashboard',
         'steps'   => [
             'component'  => 'Crear componentes',
             'incident'   => 'Crear incidentes',
-            'customize'  => 'Personaliza tu página de estado Cachet.',
-            'team'       => 'Agregar usuarios a tu equipo.',
-            'api'        => 'Generar token API.',
-            'two-factor' => 'Habilitar autenticación de dos pasos.',
+            'customize'  => 'Personalizar',
+            'team'       => 'Agregar Usuarios',
+            'api'        => 'Generar token API',
+            'two-factor' => 'Autenticación de dos factores',
         ],
     ],
 

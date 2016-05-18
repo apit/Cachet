@@ -3,7 +3,7 @@
 /*
  * This file is part of Cachet.
  *
- * (c) James Brooks <james@cachethq.io>
+ * (c) Alt Three Services Limited
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -20,12 +20,11 @@ return [
     | API, giving you convenient access to each back-end using the same
     | syntax for each one. Here you may set the default queue driver.
     |
-    | Supported: "null", "sync", "database", "beanstalkd",
-    |            "sqs", "iron", "redis"
+    | Supported: "null", "sync", "database", "beanstalkd", "sqs", "redis"
     |
     */
 
-    'default' => env('QUEUE_DRIVER', 'sync'),
+    'default' => env('QUEUE_DRIVER', 'database'),
 
     /*
     |--------------------------------------------------------------------------
@@ -62,23 +61,16 @@ return [
             'driver' => 'sqs',
             'key'    => 'your-public-key',
             'secret' => 'your-secret-key',
-            'queue'  => 'your-queue-url',
+            'prefix' => 'https://sqs.us-east-1.amazonaws.com/your-account-id',
+            'queue'  => 'your-queue-name',
             'region' => 'us-east-1',
         ],
 
-        'iron' => [
-            'driver'  => 'iron',
-            'host'    => 'mq-aws-us-east-1.iron.io',
-            'token'   => 'your-token',
-            'project' => 'your-project-id',
-            'queue'   => 'your-queue-name',
-            'encrypt' => true,
-        ],
-
         'redis' => [
-            'driver' => 'redis',
-            'queue'  => 'default',
-            'expire' => 60,
+            'driver'     => 'redis',
+            'connection' => 'default',
+            'queue'      => 'default',
+            'expire'     => 86400,
         ],
 
     ],
@@ -95,7 +87,8 @@ return [
     */
 
     'failed' => [
-        'database' => 'mysql', 'table' => 'failed_jobs',
+        'database' => env('DB_DRIVER', 'sqlite'),
+        'table'    => 'failed_jobs',
     ],
 
 ];

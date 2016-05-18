@@ -3,7 +3,7 @@
 /*
  * This file is part of Cachet.
  *
- * (c) James Brooks <james@cachethq.io>
+ * (c) Alt Three Services Limited
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -23,16 +23,18 @@ class Repository
     protected $model;
 
     /**
-     * Cache of the settings.
+     * Is the config state stale?
      *
-     * @var array|null
+     * @var bool
      */
-    protected $settings;
+    protected $stale = false;
 
     /**
      * Create a new settings service instance.
      *
      * @param \CachetHQ\Cachet\Models\Setting $model
+     *
+     * @return void
      */
     public function __construct(Setting $model)
     {
@@ -42,43 +44,53 @@ class Repository
     /**
      * Returns a setting from the database.
      *
-     * @param string $name
-     * @param bool   $checkEnv
-     *
-     * @return string|null
+     * @return array
      */
-    public function get($name, $checkEnv = true)
+    public function all()
     {
-        // if we've not loaded the settings, load them now
-        if (!$this->settings) {
-            $this->settings = $this->model->all()->lists('value', 'name');
-        }
+        return $this->model->all(['name', 'value'])->pluck('value', 'name')->toArray();
+    }
 
-        // if the setting exists, return it
-        if (isset($this->settings[$name])) {
-            return $this->settings[$name];
-        }
+    /**
+     * Updates a setting value.
+     *
+     * @param string      $name
+     * @param string|null $value
+     *
+     * @return void
+     */
+    public function set($name, $value)
+    {
+        $this->stale = true;
 
-        // fallback to getenv if allowed to
-        if ($checkEnv) {
-            return $this->settings[$name] = getenv(strtoupper($name));
+        if ($value === null) {
+            $this->model->where('name', $name)->delete();
+        } else {
+            $this->model->updateOrCreate(compact('name'), compact('value'));
         }
     }
 
     /**
-     * Creates or updates a setting value.
+     * Deletes a setting.
      *
      * @param string $name
-     * @param string $value
+     *
+     * @return void
      */
-    public function set($name, $value)
+    public function delete($name)
     {
-        // save the change to the db
-        $this->model->updateOrCreate(compact('name'), compact('value'));
+        $this->stale = true;
 
-        // if we've loaded the settings, persist this change
-        if ($this->settings) {
-            $this->settings[$name] = $value;
-        }
+        $this->model->where('name', $name)->delete();
+    }
+
+    /**
+     * Is the config state stale?
+     *
+     * @return bool
+     */
+    public function stale()
+    {
+        return $this->stale;
     }
 }

@@ -3,7 +3,7 @@
 /*
  * This file is part of Cachet.
  *
- * (c) James Brooks <james@cachethq.io>
+ * (c) Alt Three Services Limited
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,85 +11,121 @@
 
 namespace CachetHQ\Cachet\Http\Controllers\Api;
 
-use CachetHQ\Cachet\Repositories\Incident\IncidentRepository;
+use CachetHQ\Cachet\Bus\Commands\Incident\RemoveIncidentCommand;
+use CachetHQ\Cachet\Bus\Commands\Incident\ReportIncidentCommand;
+use CachetHQ\Cachet\Bus\Commands\Incident\UpdateIncidentCommand;
+use CachetHQ\Cachet\Models\Incident;
 use GrahamCampbell\Binput\Facades\Binput;
-use Illuminate\Http\Request;
+use Illuminate\Contracts\Auth\Guard;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Request;
+use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 class IncidentController extends AbstractApiController
 {
     /**
-     * The incident repository instance.
-     *
-     * @var \CachetHQ\Cachet\Repositories\Incident\IncidentRepository
-     */
-    protected $incident;
-
-    /**
-     * Create a new incident controller instance.
-     *
-     * @param \CachetHQ\Cachet\Repositories\Incident\IncidentRepository $incident
-     */
-    public function __construct(IncidentRepository $incident)
-    {
-        $this->incident = $incident;
-    }
-
-    /**
      * Get all incidents.
      *
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function getIncidents(Request $request)
+    public function getIncidents()
     {
-        $incidents = $this->incident->paginate(Binput::get('per_page', 20));
+        $incidentVisibility = app(Guard::class)->check() ? 0 : 1;
 
-        return $this->paginator($incidents, $request);
+        $incidents = Incident::where('visible', '>=', $incidentVisibility);
+
+        $incidents->search(Binput::except(['sort', 'order', 'per_page']));
+
+        if ($sortBy = Binput::get('sort')) {
+            $direction = Binput::has('order') && Binput::get('order') == 'desc';
+
+            $incidents->sort($sortBy, $direction);
+        }
+
+        $incidents = $incidents->paginate(Binput::get('per_page', 20));
+
+        return $this->paginator($incidents, Request::instance());
     }
 
     /**
      * Get a single incident.
      *
-     * @param int $id
+     * @param \CachetHQ\Cachet\Models\Incident $incident
      *
-     * @return \CachetHQ\Cachet\Models\Incident
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function getIncident($id)
+    public function getIncident(Incident $incident)
     {
-        return $this->incident->findOrFail($id);
+        return $this->item($incident);
     }
 
     /**
      * Create a new incident.
      *
-     * @return \CachetHQ\Cachet\Models\Incident
+     * @return \Illuminate\Http\JsonResponse
      */
     public function postIncidents()
     {
-        return $this->incident->create($this->auth->user()->id, Binput::all());
+        try {
+            $incident = dispatch(new ReportIncidentCommand(
+                Binput::get('name'),
+                Binput::get('status'),
+                Binput::get('message'),
+                Binput::get('visible', true),
+                Binput::get('component_id'),
+                Binput::get('component_status'),
+                Binput::get('notify', true),
+                Binput::get('created_at'),
+                Binput::get('template'),
+                Binput::get('vars')
+            ));
+        } catch (QueryException $e) {
+            throw new BadRequestHttpException();
+        }
+
+        return $this->item($incident);
     }
 
     /**
      * Update an existing incident.
      *
-     * @param int $id
+     * @param \CachetHQ\Cachet\Models\Incident $incident
      *
-     * @return \CachetHQ\Cachet\Models\Incident
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function putIncident($id)
+    public function putIncident(Incident $incident)
     {
-        return $this->incident->update($id, Binput::all());
+        try {
+            $incident = dispatch(new UpdateIncidentCommand(
+                $incident,
+                Binput::get('name'),
+                Binput::get('status'),
+                Binput::get('message'),
+                Binput::get('visible', true),
+                Binput::get('component_id'),
+                Binput::get('component_status'),
+                Binput::get('notify', true),
+                Binput::get('created_at'),
+                Binput::get('template'),
+                Binput::get('vars')
+            ));
+        } catch (QueryException $e) {
+            throw new BadRequestHttpException();
+        }
+
+        return $this->item($incident);
     }
 
     /**
      * Delete an existing incident.
      *
-     * @param int $id
+     * @param \CachetHQ\Cachet\Models\Incident $incident
      *
-     * @return \Dingo\Api\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function deleteIncident($id)
+    public function deleteIncident(Incident $incident)
     {
-        $this->incident->destroy($id);
+        dispatch(new RemoveIncidentCommand($incident));
 
         return $this->noContent();
     }

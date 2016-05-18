@@ -3,7 +3,7 @@
 /*
  * This file is part of Cachet.
  *
- * (c) James Brooks <james@cachethq.io>
+ * (c) Alt Three Services Limited
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -23,10 +23,26 @@ class Kernel extends HttpKernel
     protected $middleware = [
         'Fideloper\Proxy\TrustProxies',
         'Illuminate\Foundation\Http\Middleware\CheckForMaintenanceMode',
-        'Illuminate\Cookie\Middleware\EncryptCookies',
-        'Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse',
-        'Illuminate\Session\Middleware\StartSession',
-        'Illuminate\View\Middleware\ShareErrorsFromSession',
+    ];
+
+    /**
+     * The application's route middleware groups.
+     *
+     * @var array
+     */
+    protected $middlewareGroups = [
+        'web' => [
+            'Illuminate\Cookie\Middleware\EncryptCookies',
+            'Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse',
+            'Illuminate\Session\Middleware\StartSession',
+            'Illuminate\View\Middleware\ShareErrorsFromSession',
+            'Illuminate\Foundation\Http\Middleware\VerifyCsrfToken',
+        ],
+        'api' => [
+            'Barryvdh\Cors\HandleCors',
+            'CachetHQ\Cachet\Http\Middleware\Acceptable',
+            'CachetHQ\Cachet\Http\Middleware\Timezone',
+        ],
     ];
 
     /**
@@ -35,16 +51,14 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $routeMiddleware = [
-        'auth'               => 'CachetHQ\Cachet\Http\Middleware\Authenticate',
-        'auth.api'           => 'CachetHQ\Cachet\Http\Middleware\ApiAuthenticate',
-        'auth.basic'         => 'Illuminate\Auth\Middleware\AuthenticateWithBasicAuth',
-        'guest'              => 'CachetHQ\Cachet\Http\Middleware\RedirectIfAuthenticated',
-        'csrf'               => 'CachetHQ\Cachet\Http\Middleware\VerifyCsrfToken',
-        'admin'              => 'CachetHQ\Cachet\Http\Middleware\Admin',
-        'login.throttling'   => 'CachetHQ\Cachet\Http\Middleware\LoginThrottling',
-        'app.isSetup'        => 'CachetHQ\Cachet\Http\Middleware\AppIsSetup',
-        'app.hasSetting'     => 'CachetHQ\Cachet\Http\Middleware\HasSetting',
-        'allowedDomains'     => 'CachetHQ\Cachet\Http\Middleware\AllowedDomains',
-        'cors'               => 'CachetHQ\Cachet\Http\Middleware\Cors',
+        'admin'       => 'CachetHQ\Cachet\Http\Middleware\Admin',
+        'auth'        => 'CachetHQ\Cachet\Http\Middleware\Authenticate',
+        'auth.api'    => 'CachetHQ\Cachet\Http\Middleware\ApiAuthentication',
+        'guest'       => 'CachetHQ\Cachet\Http\Middleware\RedirectIfAuthenticated',
+        'localize'    => 'CachetHQ\Cachet\Http\Middleware\Localize',
+        'ready'       => 'CachetHQ\Cachet\Http\Middleware\ReadyForUse',
+        'setup'       => 'CachetHQ\Cachet\Http\Middleware\SetupAlreadyCompleted',
+        'subscribers' => 'CachetHQ\Cachet\Http\Middleware\SubscribersConfigured',
+        'throttle'    => 'Illuminate\Routing\Middleware\ThrottleRequests',
     ];
 }

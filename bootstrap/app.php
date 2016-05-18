@@ -3,15 +3,13 @@
 /*
  * This file is part of Cachet.
  *
- * (c) James Brooks <james@cachethq.io>
+ * (c) Alt Three Services Limited
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
 
-$app = new Illuminate\Foundation\Application(
-    realpath(__DIR__.'/../')
-);
+$app = new Illuminate\Foundation\Application(realpath(__DIR__.'/../'));
 
 /*
 |--------------------------------------------------------------------------
@@ -24,20 +22,11 @@ $app = new Illuminate\Foundation\Application(
 |
 */
 
-$app->singleton(
-    'Illuminate\Contracts\Http\Kernel',
-    'CachetHQ\Cachet\Http\Kernel'
-);
+$app->singleton('Illuminate\Contracts\Http\Kernel', 'CachetHQ\Cachet\Http\Kernel');
 
-$app->singleton(
-    'Illuminate\Contracts\Console\Kernel',
-    'CachetHQ\Cachet\Console\Kernel'
-);
+$app->singleton('Illuminate\Contracts\Console\Kernel', 'CachetHQ\Cachet\Console\Kernel');
 
-$app->singleton(
-    'Illuminate\Contracts\Debug\ExceptionHandler',
-    'CachetHQ\Cachet\Exceptions\Handler'
-);
+$app->singleton('Illuminate\Contracts\Debug\ExceptionHandler', 'GrahamCampbell\Exceptions\ExceptionHandler');
 
 /*
 |--------------------------------------------------------------------------

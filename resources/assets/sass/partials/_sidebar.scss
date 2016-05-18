@@ -23,6 +23,7 @@ body.dashboard {
             list-style: none;
 
             .profile {
+                text-align: center;
                 padding: 20px 10px;
                 margin-bottom: 0;
                 .dropdown-toggle {
@@ -33,22 +34,29 @@ body.dashboard {
                 }
                 .avatar {
                     width: 60px;
-                    margin-right: 10px;
                     img {
                         border-radius: 50%;
                         width: 50px;
                     }
                 }
-                .profile {
-                    &.username {
-                        word-break: break-all;
-                        color: $sidebar-text-color;
-                    }
+                .username {
+                    word-break: break-all;
+                    margin-bottom: 0;
+                }
+                a {
+                    color: $sidebar-text-color;
+                    text-decoration: none;
                 }
             }
             .quick-add-incident {
                 @extend .text-center;
                 padding: 10px;
+                i {
+                    @extend .visible-sm;
+                }
+                span {
+                    @extend .hidden-sm;
+                }
             }
             ul {
                 clear: both;
@@ -58,17 +66,18 @@ body.dashboard {
 
                 li {
                     font-size: $sidebar-text-size;
-                    &:last-child {
-                        border-bottom: $sidebar-border-color;
-                    }
                     &.active {
                         background: lighten($sidebar-background-color, 2%);
                         a {
                             padding-top: 14px;
                             padding-bottom: 14px;
-                            border-top: 1px solid #BED3EA;
-                            border-bottom: 1px solid #BED3EA;
+                            border-top: 1px solid #6c818c;
+                            border-bottom: 1px solid #6c818c;
                             color: $sidebar-text-active-color;
+                            &:focus,
+                            &:hover {
+                                text-decoration: none;
+                            }
                         }
                     }
                     a {
@@ -81,7 +90,9 @@ body.dashboard {
                             text-align: center;
                             position: relative;
                             top: 1px;
+                            margin-right: 5px;
                         }
+                        &:focus,
                         &:hover {
                             text-decoration: none;
                         }
@@ -104,8 +115,14 @@ body.dashboard {
                     }
                 }
             }
+            & > ul > li > a {
+                & > span {
+                    @extend .hidden-sm;
+                }
+            }
         }
         .bottom-menu-sidebar {
+            @extend .hidden-sm;
             position: fixed;
             bottom: 0;
             width: 230px;
@@ -117,6 +134,7 @@ body.dashboard {
                 border-right: 1px solid #ddd;
                 border-top: 1px solid #ddd;
                 a {
+                    color: #333333;
                     display: block;
                     position: relative;
                     text-align: center;
@@ -148,19 +166,12 @@ body.dashboard {
                 .profile .avatar img {
                     width: 40px;
                 }
-                .profile .username-wrapper {
-                    @extend .hidden-sm;
-                }
                 .quick-add-incident {
                     .btn {
                         padding: 3px 6px;
                     }
                     i {
-                        @extend .visible-sm;
                         font-size: 20px;
-                    }
-                    span {
-                        @extend .hidden-sm;
                     }
                 }
                 & > ul > li > a {
@@ -168,13 +179,7 @@ body.dashboard {
                     & > i {
                         font-size: 25px;
                     }
-                    & > span {
-                        @extend .hidden-sm;
-                    }
                 }
-            }
-            .bottom-menu-sidebar {
-                @extend .hidden-sm;
             }
         }
     }
@@ -199,7 +204,7 @@ body.dashboard {
         position: fixed;
         margin-left: 228px;
         width: 22%;
-        background: #fcfcfc;
+        background: #f9fdff;
         border-right: 1px solid #E8ECF1;
 
         h3 {
@@ -230,6 +235,9 @@ body.dashboard {
                     &:hover {
                         color: $cachet-secondary;
                     }
+                }
+                i {
+                    margin-right: 5px;
                 }
             }
         }

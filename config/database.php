@@ -3,7 +3,7 @@
 /*
  * This file is part of Cachet.
  *
- * (c) James Brooks <james@cachethq.io>
+ * (c) Alt Three Services Limited
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -57,8 +57,8 @@ return [
 
         'sqlite' => [
             'driver'   => 'sqlite',
-            'database' => storage_path().'/database.sqlite',
-            'prefix'   => '',
+            'database' => env('DB_DATABASE', database_path('database.sqlite')),
+            'prefix'   => env('DB_PREFIX', null),
         ],
 
         'mysql' => [
@@ -67,30 +67,34 @@ return [
             'database'  => env('DB_DATABASE', null),
             'username'  => env('DB_USERNAME', null),
             'password'  => env('DB_PASSWORD', null),
+            'port'      => env('DB_PORT', '3306'),
             'charset'   => 'utf8',
             'collation' => 'utf8_unicode_ci',
-            'prefix'    => '',
+            'prefix'    => env('DB_PREFIX', null),
             'strict'    => false,
+            'engine'    => null,
         ],
 
         'pgsql' => [
-            'driver'   => 'pgsql',
-            'host'     => env('DB_HOST', null),
-            'database' => env('DB_DATABASE', null),
-            'username' => env('DB_USERNAME', null),
-            'password' => env('DB_PASSWORD', null),
-            'charset'  => 'utf8',
-            'prefix'   => '',
-            'schema'   => 'public',
+            'driver'    => 'pgsql',
+            'host'      => env('DB_HOST', null),
+            'database'  => env('DB_DATABASE', null),
+            'username'  => env('DB_USERNAME', null),
+            'password'  => env('DB_PASSWORD', null),
+            'port'      => env('DB_PORT', '5432'),
+            'charset'   => 'utf8',
+            'prefix'    => env('DB_PREFIX', null),
+            'schema'    => env('DB_SCHEMA', 'public'),
         ],
 
         'sqlsrv' => [
-            'driver'   => 'sqlsrv',
-            'host'     => env('DB_HOST', null),
-            'database' => env('DB_DATABASE', null),
-            'username' => env('DB_USERNAME', null),
-            'password' => env('DB_PASSWORD', null),
-            'prefix'   => '',
+            'driver'    => 'sqlsrv',
+            'host'      => env('DB_HOST', null),
+            'database'  => env('DB_DATABASE', null),
+            'username'  => env('DB_USERNAME', null),
+            'password'  => env('DB_PASSWORD', null),
+            'port'      => env('DB_PORT', null),
+            'prefix'    => env('DB_PREFIX', null),
         ],
 
     ],
@@ -124,9 +128,9 @@ return [
         'cluster' => false,
 
         'default' => [
-            'host'     => '127.0.0.1',
-            'port'     => 6379,
-            'database' => 0,
+            'host'     => env('REDIS_HOST', '127.0.0.1'),
+            'port'     => env('REDIS_PORT', 6379),
+            'database' => env('REDIS_DATABASE', 0),
         ],
 
     ],

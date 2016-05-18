@@ -5,12 +5,18 @@ $(function() {
         if (! options.crossDomain) {
             token = $('meta[name="token"]').attr('content');
             if (token) {
-                return jqXHR.setRequestHeader('X-CSRF-Token', token);
+                jqXHR.setRequestHeader('X-CSRF-Token', token);
             }
         }
+
+        return jqXHR;
     });
 
     $.ajaxSetup({
+        beforeSend: function (xhr) {
+            xhr.setRequestHeader('Accept', 'application/json');
+            // xhr.setRequestHeader('Content-Type', 'application/json; charset=utf-8');
+        },
         statusCode: {
             401: function () {
                 window.location.href = '/';
@@ -27,19 +33,30 @@ $(function() {
         $form.find(':submit').prop('disabled', true);
     });
 
+    // Autosizing of textareas.
+    autosize($('textarea.autosize'));
+
     // Mock the DELETE form requests.
     $('[data-method]').not(".disabled").append(function() {
         var methodForm = "\n";
-        methodForm    += "<form action='" + $(this).attr('href') + "' method='POST' style='display:none'>\n";
-        methodForm    += " <input type='hidden' name='_method' value='" + $(this).attr('data-method') + "'>\n";
-        if ($(this).attr('data-token')) {
-            methodForm += "<input type='hidden' name='_token' value='" + $(this).attr('data-token') + "'>\n";
-        }
+        methodForm += "<form action='" + $(this).attr('href') + "' method='POST' style='display:none'>\n";
+        methodForm += "<input type='hidden' name='_method' value='" + $(this).attr('data-method') + "'>\n";
+        methodForm += "<input type='hidden' name='_token' value='" + $('meta[name=token]').attr('content') + "'>\n";
         methodForm += "</form>\n";
         return methodForm;
     })
         .removeAttr('href')
-        .attr('onclick', ' if ($(this).hasClass(\'confirm-action\')) { if(confirm("Are you sure you want to do this?")) { $(this).find("form").submit(); } } else { $(this).find("form").submit(); }');
+        .on('click', function() {
+            var button = $(this);
+
+            if (button.hasClass('confirm-action')) {
+                askConfirmation(function() {
+                    button.find("form").submit();
+                });
+            } else {
+                button.find("form").submit();
+            }
+        });
 
     // Messenger config
     Messenger.options = {
@@ -48,7 +65,7 @@ $(function() {
     };
 
     // App setup
-    window.CachetHQ = {};
+    window.Cachet = {};
 
     moment.locale(Global.locale);
 
@@ -59,8 +76,11 @@ $(function() {
             .tooltip();
     });
 
-    window.CachetHQ.Notifier = function () {
+    window.Cachet.Notifier = function () {
         this.notify = function (message, type, options) {
+            if (_.isPlainObject(message)) {
+                message = message.detail;
+            }
             type = (typeof type === 'undefined' || type === 'error') ? 'error' : type;
 
             var defaultOptions = {
@@ -96,7 +116,7 @@ $(function() {
         $(this).parents('div.alert').addClass('hide');
     });
 
-    $('form[name=IncidentForm] select[name=incident\\[component_id\\]]').on('change', function() {
+    $('form[name=IncidentForm] select[name=component_id]').on('change', function() {
         var $option = $(this).find('option:selected');
         var $componentStatus = $('#component-status');
 
@@ -126,6 +146,21 @@ $(function() {
         }
     });
 
+    $('input[rel=datepicker-any]').datetimepicker({
+        format: "DD/MM/YYYY HH:mm",
+        sideBySide: true,
+        icons: {
+            time: 'ion-clock',
+            date: 'ion-android-calendar',
+            up: 'ion-ios-arrow-up',
+            down: 'ion-ios-arrow-down',
+            previous: 'ion-ios-arrow-left',
+            next: 'ion-ios-arrow-right',
+            today: 'ion-android-home',
+            clear: 'ion-trash-a',
+        }
+    });
+
     // Sortable components.
     var componentList = document.getElementById("component-list");
     if (componentList) {
@@ -133,19 +168,51 @@ $(function() {
             group: "omega",
             handle: ".drag-handle",
             onUpdate: function() {
-                var orderedComponentIds = $.map(
-                    $('#component-list .striped-list-item'),
-                    function(elem) {
-                        return $(elem).data('component-id');
-                    }
-                );
+                var orderedComponentIds = $.map($('#component-list .striped-list-item'), function(elem) {
+                    return $(elem).data('component-id');
+                });
+
                 $.ajax({
                     async: true,
                     url: '/dashboard/api/components/order',
                     type: 'POST',
-                    data: {ids: orderedComponentIds},
+                    data: {
+                        ids: orderedComponentIds
+                    },
                     success: function() {
-                        (new CachetHQ.Notifier()).notify('Components updated.', 'success');
+                        (new Cachet.Notifier()).notify('Component orders updated.', 'success');
+                    },
+                    error: function() {
+                        (new Cachet.Notifier()).notify('Component orders not updated.', 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    // Sortable Component Groups
+    var componentGroupList = document.getElementById("component-group-list");
+    if (componentGroupList) {
+        new Sortable(componentGroupList, {
+            group: "omega",
+            handle: ".drag-handle",
+            onUpdate: function() {
+                var orderedComponentGroupsIds = $.map(
+                    $('#component-group-list .striped-list-item'),
+                    function(elem) {
+                        return $(elem).data('group-id');
+                    }
+                );
+                $.ajax({
+                    async: true,
+                    url: '/dashboard/api/components/groups/order',
+                    type: 'POST',
+                    data: {ids: orderedComponentGroupsIds},
+                    success: function() {
+                        (new Cachet.Notifier()).notify('Component groups order has been updated.', 'success');
+                    },
+                    error: function() {
+                        (new Cachet.Notifier()).notify('Component groups order could not be updated.', 'error');
                     }
                 });
             }
@@ -163,10 +230,10 @@ $(function() {
             type: 'POST',
             data: formData,
             success: function(component) {
-                (new CachetHQ.Notifier()).notify($form.data('messenger'), 'success');
+                (new Cachet.Notifier()).notify($form.data('messenger'), 'success');
             },
             error: function(a, b, c) {
-                (new CachetHQ.Notifier()).notify('Something went wrong updating the component.');
+                (new Cachet.Notifier()).notify('Something went wrong updating the component.');
             }
         });
     });
@@ -180,18 +247,17 @@ $(function() {
         if (slug) {
             $.ajax({
                 async: true,
-                dataType: 'json',
                 data: {
                     slug: slug
                 },
                 url: '/dashboard/api/incidents/templates',
                 success: function(tpl) {
                     var $form = $('form[role=form]');
-                    $form.find('input[name=incident\\[name\\]]').val(tpl.name);
-                    $form.find('textarea[name=incident\\[message\\]]').val(tpl.template);
+                    $form.find('input[name=name]').val(tpl.name);
+                    $form.find('textarea[name=message]').val(tpl.template);
                 },
                 error: function() {
-                    (new CachetHQ.Notifier()).notify('There was an error finding that template.');
+                    (new Cachet.Notifier()).notify('There was an error finding that template.');
                 }
             });
         }
@@ -201,6 +267,14 @@ $(function() {
     $('#remove-banner').click(function(){
         $('#banner-view').remove();
         $('input[name=remove_banner]').val('1');
+    });
+
+    $('.group-name').on('click', function () {
+        var $this = $(this);
+
+        $this.find('.group-toggle').toggleClass('ion-ios-minus-outline').toggleClass('ion-ios-plus-outline');
+
+        $this.next('.group-items').toggleClass('hide');
     });
 
     // Setup wizard
@@ -222,7 +296,7 @@ $(function() {
                 .fail(function(response) {
                     var errors = _.toArray(response.responseJSON.errors);
                     _.each(errors, function(error) {
-                        (new CachetHQ.Notifier()).notify(error);
+                        (new Cachet.Notifier()).notify(error);
                     });
                 })
                 .always(function() {
@@ -235,6 +309,42 @@ $(function() {
             $btn.button('reset');
         }
     });
+
+    // Sparkline
+    if ($.fn.sparkline) {
+        var sparkLine = function () {
+            $('.sparkline').each(function () {
+                var data = $(this).data();
+                data.valueSpots = {
+                    '0:': data.spotColor
+                };
+
+                $(this).sparkline(data.data, data);
+                var composite = data.compositedata;
+
+                if (composite) {
+                    var stlColor = $(this).attr("data-stack-line-color"),
+                        stfColor = $(this).attr("data-stack-fill-color"),
+                        sptColor = $(this).attr("data-stack-spot-color"),
+                        sptRadius = $(this).attr("data-stack-spot-radius");
+
+                    $(this).sparkline(composite, {
+                        composite: true,
+                        lineColor: stlColor,
+                        fillColor: stfColor,
+                        spotColor: sptColor,
+                        highlightSpotColor: sptColor,
+                        spotRadius: sptRadius,
+                        valueSpots: {
+                            '0:': sptColor
+                        }
+                    });
+                };
+            });
+        };
+
+        sparkLine(false);
+    }
 
     function goToStep(current, next) {
         // validation was ok. We can go on next step.
@@ -251,4 +361,50 @@ $(function() {
             .filter(":lt(" + (next) + ")")
             .addClass("active");
     }
+
+    // Password strength
+    $('.password-strength').strengthify();
+
+    // Check for updates.
+    if ($('#update-alert').length > 0) {
+        $.ajax({
+            async: true,
+            dataType: 'json',
+            url: '/dashboard/api/system/version',
+        }).done(function (result) {
+            if (result.is_latest == false) {
+                $('#update-alert').removeClass('hidden');
+            }
+        });
+    }
+
+    // Open a modal.
+    $('#subscribe-modal')
+        .on('show.bs.modal', function (event) {
+            var $button = $(event.relatedTarget);
+            var $modal = $(this);
+            $modal.find('#subscribe-modal-id').val($button.data('component-id'));
+        })
+        .on('hidden.bs.modal', function (event) {
+            var $modal = $(this);
+            $modal.find('#subscribe-modal-id').val('');
+        });
+
+    // Focus on any modals.
+    $('.modal').on('shown.bs.modal', function () {
+        $(this).find('input[type=text]').focus();
+    });
 });
+
+function askConfirmation(callback) {
+    swal({
+        type: "warning",
+        title: "Confirm your action",
+        text: "Are you sure you want to do this?",
+        confirmButtonText: "Yes",
+        confirmButtonColor: "#FF6F6F",
+        showCancelButton: true
+    }, function() {
+        callback();
+    });
+}

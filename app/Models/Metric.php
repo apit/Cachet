@@ -3,7 +3,7 @@
 /*
  * This file is part of Cachet.
  *
- * (c) James Brooks <james@cachethq.io>
+ * (c) Alt Three Services Limited
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,29 +11,28 @@
 
 namespace CachetHQ\Cachet\Models;
 
-use DateInterval;
-use DateTime;
+use AltThree\Validator\ValidatingTrait;
+use CachetHQ\Cachet\Models\Traits\SortableTrait;
+use CachetHQ\Cachet\Presenters\MetricPresenter;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\DB;
-use Watson\Validating\ValidatingTrait;
+use McCool\LaravelAutoPresenter\HasPresenter;
 
-/**
- * @property int            $id
- * @property string         $name
- * @property string         $suffix
- * @property string         $description
- * @property float          $default_value
- * @property int            $calc_type
- * @property int            $display_chart
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
- */
-class Metric extends Model
+class Metric extends Model implements HasPresenter
 {
-    use ValidatingTrait;
+    use SortableTrait, ValidatingTrait;
 
+    /**
+     * The calculation type of sum.
+     *
+     * @var int
+     */
     const CALC_SUM = 0;
+
+    /**
+     * The calculation type of average.
+     *
+     * @var int
+     */
     const CALC_AVG = 1;
 
     /**
@@ -46,18 +45,24 @@ class Metric extends Model
         'display_chart' => 1,
         'default_value' => 0,
         'calc_type'     => 0,
+        'places'        => 2,
+        'default_view'  => 1,
+        'threshold'     => 5,
     ];
 
     /**
-     * The validation rules.
+     * The attributes that should be casted to native types.
      *
      * @var string[]
      */
-    protected $rules = [
-        'name'          => 'required',
-        'suffix'        => 'required',
-        'display_chart' => 'boolean',
-        'default_value' => 'numeric',
+    protected $casts = [
+        'name'          => 'string',
+        'display_chart' => 'bool',
+        'default_value' => 'int',
+        'calc_type'     => 'int',
+        'places'        => 'int',
+        'default_view'  => 'int',
+        'threshold'     => 'int',
     ];
 
     /**
@@ -65,7 +70,45 @@ class Metric extends Model
      *
      * @var string[]
      */
-    protected $fillable = ['name', 'suffix', 'description', 'display_chart', 'default_value', 'calc_type'];
+    protected $fillable = [
+        'name',
+        'suffix',
+        'description',
+        'display_chart',
+        'default_value',
+        'calc_type',
+        'places',
+        'default_view',
+        'threshold',
+    ];
+
+    /**
+     * The validation rules.
+     *
+     * @var string[]
+     */
+    public $rules = [
+        'name'          => 'required',
+        'suffix'        => 'required',
+        'display_chart' => 'bool',
+        'default_value' => 'numeric',
+        'places'        => 'numeric|between:0,4',
+        'default_view'  => 'numeric|between:0,3',
+        'threshold'     => 'numeric|between:0,10',
+    ];
+
+    /**
+     * The sortable fields.
+     *
+     * @var string[]
+     */
+    protected $sortable = [
+        'id',
+        'name',
+        'display_chart',
+        'default_value',
+        'calc_type',
+    ];
 
     /**
      * Metrics contain many metric points.
@@ -74,53 +117,7 @@ class Metric extends Model
      */
     public function points()
     {
-        return $this->hasMany('CachetHQ\Cachet\Models\MetricPoint', 'metric_id', 'id');
-    }
-
-    /**
-     * Returns the sum of all values a metric has.
-     *
-     * @param int $hour
-     *
-     * @return int
-     */
-    public function getValues($hour)
-    {
-        $dateTime = new DateTime();
-        $dateTime->sub(new DateInterval('PT'.$hour.'H'));
-
-        if (Config::get('database.default') === 'mysql') {
-            if (!isset($this->calc_type) || $this->calc_type == self::CALC_SUM) {
-                $value = (int) $this->points()->whereRaw('DATE_FORMAT(created_at, "%Y%m%d%H") = '.$dateTime->sub(new DateInterval('PT'.$hour.'H'))->format('YmdH'))->groupBy(DB::raw('HOUR(created_at)'))->sum('value');
-            } elseif ($this->calc_type == self::CALC_AVG) {
-                $value = (int) $this->points()->whereRaw('DATE_FORMAT(created_at, "%Y%m%d%H") = '.$dateTime->sub(new DateInterval('PT'.$hour.'H'))->format('YmdH'))->groupBy(DB::raw('HOUR(created_at)'))->avg('value');
-            }
-        } else {
-            // Default metrics calculations.
-            if (!isset($this->calc_type) || $this->calc_type == self::CALC_SUM) {
-                $queryType = 'sum(metric_points.value)';
-            } elseif ($this->calc_type == self::CALC_AVG) {
-                $queryType = 'avg(metric_points.value)';
-            } else {
-                $queryType = 'sum(metric_points.value)';
-            }
-
-            $query = DB::select("select {$queryType} as aggregate FROM metrics JOIN metric_points ON metric_points.metric_id = metrics.id WHERE metric_points.metric_id = {$this->id} AND to_char(metric_points.created_at, 'YYYYMMDDHH24') = :timestamp GROUP BY to_char(metric_points.created_at, 'H')", [
-                'timestamp' => $dateTime->sub(new DateInterval('PT'.$hour.'H'))->format('YmdH'),
-            ]);
-
-            if (isset($query[0])) {
-                $value = $query[0]->aggregate;
-            } else {
-                $value = 0;
-            }
-        }
-
-        if ($value === 0 && $this->default_value != $value) {
-            return $this->default_value;
-        }
-
-        return $value;
+        return $this->hasMany(MetricPoint::class, 'metric_id', 'id');
     }
 
     /**
@@ -131,5 +128,15 @@ class Metric extends Model
     public function getShouldDisplayAttribute()
     {
         return $this->display_chart === 1;
+    }
+
+    /**
+     * Get the presenter class.
+     *
+     * @return string
+     */
+    public function getPresenterClass()
+    {
+        return MetricPresenter::class;
     }
 }

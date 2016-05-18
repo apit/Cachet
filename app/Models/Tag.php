@@ -3,7 +3,7 @@
 /*
  * This file is part of Cachet.
  *
- * (c) James Brooks <james@cachethq.io>
+ * (c) Alt Three Services Limited
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -14,15 +14,17 @@ namespace CachetHQ\Cachet\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
-/**
- * @property int            $id
- * @property string         $name
- * @property string         $slug
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
- */
 class Tag extends Model
 {
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var string[]
+     */
+    protected $casts = [
+        'name' => 'string',
+    ];
+
     /**
      * The fillable properties.
      *
@@ -49,6 +51,6 @@ class Tag extends Model
      */
     public function components()
     {
-        return $this->belongsToMany('CachetHQ\Cachet\Models\Component');
+        return $this->belongsToMany(Component::class);
     }
 }

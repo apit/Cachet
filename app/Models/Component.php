@@ -3,7 +3,7 @@
 /*
  * This file is part of Cachet.
  *
- * (c) James Brooks <james@cachethq.io>
+ * (c) Alt Three Services Limited
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,55 +11,18 @@
 
 namespace CachetHQ\Cachet\Models;
 
+use AltThree\Validator\ValidatingTrait;
+use CachetHQ\Cachet\Models\Traits\SearchableTrait;
+use CachetHQ\Cachet\Models\Traits\SortableTrait;
+use CachetHQ\Cachet\Presenters\ComponentPresenter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Watson\Validating\ValidatingTrait;
+use McCool\LaravelAutoPresenter\HasPresenter;
 
-/**
- * @property int            $id
- * @property int            $user_id
- * @property string         $name
- * @property string         $description
- * @property int            $status
- * @property string         $link
- * @property int            $order
- * @property int            $group_id
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
- * @property \Carbon\Carbon $deleted_at
- */
-class Component extends Model
+class Component extends Model implements HasPresenter
 {
-    use SoftDeletes, ValidatingTrait;
-
-    /**
-     * The validation rules.
-     *
-     * @var string[]
-     */
-    protected $rules = [
-        'user_id' => 'integer|required',
-        'name'    => 'required',
-        'status'  => 'integer|required',
-        'link'    => 'url',
-    ];
-
-    /**
-     * The fillable properties.
-     *
-     * @var string[]
-     */
-    protected $fillable = [
-        'name',
-        'description',
-        'status',
-        'user_id',
-        'tags',
-        'link',
-        'order',
-        'group_id',
-    ];
+    use SearchableTrait, SoftDeletes, SortableTrait, ValidatingTrait;
 
     /**
      * List of attributes that have default values.
@@ -71,14 +34,77 @@ class Component extends Model
         'group_id'    => 0,
         'description' => '',
         'link'        => '',
+        'enabled'     => true,
     ];
 
     /**
-     * The attributes that should be mutated to dates.
+     * The attributes that should be casted to native types.
      *
-     * @var array
+     * @var string[]
      */
-    protected $dates = ['deleted_at'];
+    protected $casts = [
+        'order'       => 'int',
+        'group_id'    => 'int',
+        'description' => 'string',
+        'link'        => 'string',
+        'deleted_at'  => 'date',
+        'enabled'     => 'bool',
+    ];
+
+    /**
+     * The fillable properties.
+     *
+     * @var string[]
+     */
+    protected $fillable = [
+        'name',
+        'description',
+        'status',
+        'tags',
+        'link',
+        'order',
+        'group_id',
+        'enabled',
+    ];
+
+    /**
+     * The validation rules.
+     *
+     * @var string[]
+     */
+    public $rules = [
+        'name'   => 'required|string',
+        'status' => 'int|required',
+        'link'   => 'url',
+    ];
+
+    /**
+     * The searchable fields.
+     *
+     * @var string[]
+     */
+    protected $searchable = [
+        'id',
+        'name',
+        'status',
+        'order',
+        'group_id',
+        'enabled',
+    ];
+
+    /**
+     * The sortable fields.
+     *
+     * @var string[]
+     */
+    protected $sortable = [
+        'id',
+        'name',
+        'status',
+        'order',
+        'group_id',
+        'enabled',
+    ];
 
     /**
      * Components can belong to a group.
@@ -87,7 +113,7 @@ class Component extends Model
      */
     public function group()
     {
-        return $this->belongsTo('CachetHQ\Cachet\Models\ComponentGroup', 'group_id', 'id');
+        return $this->belongsTo(ComponentGroup::class, 'group_id', 'id');
     }
 
     /**
@@ -97,7 +123,7 @@ class Component extends Model
      */
     public function incidents()
     {
-        return $this->hasMany('CachetHQ\Cachet\Models\Incident', 'component_id', 'id');
+        return $this->hasMany(Incident::class, 'component_id', 'id');
     }
 
     /**
@@ -107,7 +133,7 @@ class Component extends Model
      */
     public function tags()
     {
-        return $this->belongsToMany('CachetHQ\Cachet\Models\Tag');
+        return $this->belongsToMany(Tag::class);
     }
 
     /**
@@ -137,13 +163,27 @@ class Component extends Model
     }
 
     /**
-     * Looks up the human readable version of the status.
+     * Finds all components which are enabled.
      *
-     * @return string
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function getHumanStatusAttribute()
+    public function scopeEnabled(Builder $query)
     {
-        return trans('cachet.components.status.'.$this->status);
+        return $query->where('enabled', true);
+    }
+
+    /**
+     * Finds all components which are disabled.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeDisabled(Builder $query)
+    {
+        return $query->where('enabled', false);
     }
 
     /**
@@ -158,5 +198,15 @@ class Component extends Model
         });
 
         return implode(', ', $tags->toArray());
+    }
+
+    /**
+     * Get the presenter class.
+     *
+     * @return string
+     */
+    public function getPresenterClass()
+    {
+        return ComponentPresenter::class;
     }
 }

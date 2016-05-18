@@ -3,15 +3,20 @@
 @section('content')
     <div class="header fixed">
         <div class="sidebar-toggler visible-xs">
-            <i class="icon ion-navicon"></i>
+            <i class="ion ion-navicon"></i>
         </div>
         <span class="uppercase">
-            <i class="icon icon ion-android-alert"></i> {{ trans('dashboard.team.team') }}
+            <i class="ion ion-ios-people-outline"></i> {{ trans('dashboard.team.team') }}
         </span>
-        @if($loggedUser->isAdmin)
-        <a class="btn btn-sm btn-success pull-right" href="{{ route('dashboard.team.add') }}">
-            {{ trans('dashboard.team.add.title') }}
-        </a>
+        @if($current_user->isAdmin)
+        <div class="button-group pull-right">
+            <a class="btn btn-sm btn-success" href="{{ route('dashboard.team.invite') }}">
+                {{ trans('dashboard.team.invite.title') }}
+            </a>
+            <a class="btn btn-sm btn-success" href="{{ route('dashboard.team.add') }}">
+                {{ trans('dashboard.team.add.title') }}
+            </a>
+        </div>
         @endif
         <div class="clearfix"></div>
     </div>
@@ -21,9 +26,9 @@
                 <p class="lead">{{ trans('dashboard.team.description') }}</p>
 
                 <div class="user-grid">
-                    @foreach($teamMembers as $member)
+                    @foreach($team_members as $member)
                     <div class="user col-sm-3 col-xs-6">
-                        <a href="@if($loggedUser->id == $member->id) {{ url('dashboard/user') }} @else /dashboard/team/{{ $member->id }} @endif">
+                        <a href="@if($current_user->id == $member->id) {{ url('dashboard/user') }} @else /dashboard/team/{{ $member->id }} @endif">
                             <img src="{{ $member->gravatar }}">
                         </a>
                         <div class="name">{{ $member->username }}</div>

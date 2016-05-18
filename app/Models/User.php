@@ -3,7 +3,7 @@
 /*
  * This file is part of Cachet.
  *
- * (c) James Brooks <james@cachethq.io>
+ * (c) Alt Three Services Limited
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -11,6 +11,7 @@
 
 namespace CachetHQ\Cachet\Models;
 
+use AltThree\Validator\ValidatingTrait;
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
@@ -18,35 +19,45 @@ use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Hash;
-use Watson\Validating\ValidatingTrait;
 
-/**
- * @property int            $id
- * @property string         $username
- * @property string         $password
- * @property string         $remember_token
- * @property string         $google_2fa_secret
- * @property string         $email
- * @property string         $api_key
- * @property int            $active
- * @property int            $level
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
- */
 class User extends Model implements AuthenticatableContract, CanResetPasswordContract
 {
     use Authenticatable, CanResetPassword, ValidatingTrait;
 
     /**
-     * The validation rules.
+     * The admin level of user.
+     *
+     * @var int
+     */
+    const LEVEL_ADMIN = 1;
+
+    /**
+     * The general level of user.
+     *
+     * @var int
+     */
+    const LEVEL_USER = 2;
+
+    /**
+     * The attributes that should be casted to native types.
      *
      * @var string[]
      */
-    protected $rules = [
-        'username' => 'required|alpha_num|unique:users',
-        'email'    => 'required|email|unique:users',
-        'password' => 'required',
+    protected $casts = [
+        'username'          => 'string',
+        'email'             => 'string',
+        'google_2fa_secret' => 'string',
+        'api_key'           => 'string',
+        'active'            => 'bool',
+        'level'             => 'int',
     ];
+
+    /**
+     * The properties that cannot be mass assigned.
+     *
+     * @var string[]
+     */
+    protected $guarded = [];
 
     /**
      * The hidden properties.
@@ -58,11 +69,15 @@ class User extends Model implements AuthenticatableContract, CanResetPasswordCon
     protected $hidden = ['password', 'remember_token', 'google_2fa_secret'];
 
     /**
-     * The properties that cannot be mass assigned.
+     * The validation rules.
      *
      * @var string[]
      */
-    protected $guarded = [];
+    public $rules = [
+        'username' => ['required', 'regex:/\A(?!.*[:;]-\))[ -~]+\z/'],
+        'email'    => 'required|email',
+        'password' => 'required',
+    ];
 
     /**
      * Overrides the models boot method.
@@ -142,7 +157,7 @@ class User extends Model implements AuthenticatableContract, CanResetPasswordCon
      */
     public function getIsAdminAttribute()
     {
-        return $this->level == 1;
+        return $this->level == self::LEVEL_ADMIN;
     }
 
     /**

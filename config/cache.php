@@ -3,7 +3,7 @@
 /*
  * This file is part of Cachet.
  *
- * (c) James Brooks <james@cachethq.io>
+ * (c) Alt Three Services Limited
  *
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
@@ -53,14 +53,16 @@ return [
 
         'file' => [
             'driver' => 'file',
-            'path'   => storage_path().'/framework/cache',
+            'path'   => storage_path('framework/cache'),
         ],
 
         'memcached' => [
             'driver'  => 'memcached',
             'servers' => [
                 [
-                    'host' => '127.0.0.1', 'port' => 11211, 'weight' => 100,
+                    'host'   => '127.0.0.1',
+                    'port'   => 11211,
+                    'weight' => 100,
                 ],
             ],
         ],
